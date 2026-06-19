@@ -1,0 +1,24 @@
+[package]
+name = "psn-oxide"
+description = "PosiStageNet (PSN) v2 protocol decoder and multicast receiver helper"
+keywords = ["posistagenet", "psn", "tracking", "stage", "udp"]
+categories = ["network-programming", "parser-implementations"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+name = "psn"
+
+[features]
+default = ["net"]
+# `net` pulls in socket2 for the multicast-socket helper. Disable for a
+# dependency-light, pure decoder (e.g. for embedded or wasm parsing).
+net = ["dep:socket2"]
+
+[dependencies]
+thiserror.workspace = true
+socket2 = { workspace = true, optional = true }

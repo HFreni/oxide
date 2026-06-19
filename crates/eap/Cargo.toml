@@ -1,0 +1,23 @@
+[package]
+name = "eap-oxide"
+description = "Beckhoff TwinCAT EtherCAT Automation Protocol (EAP) Network Variables decoder"
+keywords = ["ethercat", "eap", "twincat", "beckhoff", "automation"]
+categories = ["network-programming", "parser-implementations"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+name = "eap"
+
+[features]
+default = ["net"]
+# `net` pulls in socket2 for the UDP receiver helper.
+net = ["dep:socket2"]
+
+[dependencies]
+thiserror.workspace = true
+socket2 = { workspace = true, optional = true }

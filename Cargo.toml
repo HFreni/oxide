@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/psn",
+    "crates/otp",
+    "crates/eap",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "MIT OR Apache-2.0"
+authors = ["Harrison Freni <hfreni@harrisonfreni.me>"]
+repository = "https://github.com/HFreni/oxide"
+
+[workspace.dependencies]
+thiserror = "2"
+socket2 = { version = "0.5", features = ["all"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

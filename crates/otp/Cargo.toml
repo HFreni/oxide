@@ -1,0 +1,24 @@
+[package]
+name = "otp-oxide"
+description = "Object Transform Protocol (OTP, ANSI E1.59) decoder and multicast receiver helper"
+keywords = ["otp", "e1-59", "tracking", "esta", "transform"]
+categories = ["network-programming", "parser-implementations"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[lib]
+name = "otp"
+
+[features]
+default = ["net"]
+# `net` pulls in socket2 for the multicast-socket helper. Disable for a
+# dependency-light, pure decoder.
+net = ["dep:socket2"]
+
+[dependencies]
+thiserror.workspace = true
+socket2 = { workspace = true, optional = true }
