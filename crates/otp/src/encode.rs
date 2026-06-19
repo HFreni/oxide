@@ -7,7 +7,9 @@
 //! modules each carry a velocity **and** an acceleration; they are emitted when
 //! either field is present, defaulting the absent one to zero.
 
-use crate::advertisement::AdvertisementMessage;
+use crate::advertisement::{
+    AdvertisementMessage, VECTOR_ADV_MODULE, VECTOR_ADV_NAME, VECTOR_ADV_SYSTEM, VECTOR_LIST,
+};
 use crate::modules;
 use crate::transform::{Point, TransformMessage, VECTOR_POINT, VECTOR_TRANSFORM};
 use crate::{
@@ -112,24 +114,34 @@ fn encode_transform_body(t: &TransformMessage) -> Vec<u8> {
     body
 }
 
+/// Encode a 32-octet, NUL-padded name field. Names longer than 32 octets are
+/// truncated on a UTF-8 char boundary (per E1.59 §13.5.1: a name "shall not
+/// break anywhere other than a rune boundary").
 fn name_field(name: &str) -> [u8; 32] {
     let mut buf = [0u8; 32];
-    let b = name.as_bytes();
-    let n = b.len().min(32);
-    buf[..n].copy_from_slice(&b[..n]);
+    let mut n = name.len().min(32);
+    // Back up to the nearest char boundary so we never split a code point.
+    while n > 0 && !name.is_char_boundary(n) {
+        n -= 1;
+    }
+    buf[..n].copy_from_slice(&name.as_bytes()[..n]);
     buf
 }
 
-fn encode_advertisement_body(adv: &AdvertisementMessage) -> Vec<u8> {
-    let sub = match adv {
+/// Encode the OTP Advertisement Layer **body** (the bytes after its Length
+/// field): Reserved(4) followed by the inner `..._LIST` PDU. Returns the layer
+/// `kind` vector (octets 79-80) and that body, ready to be wrapped by the
+/// caller. Returns `None` for [`AdvertisementMessage::Unknown`].
+fn encode_advertisement_layer(adv: &AdvertisementMessage) -> Option<(u16, Vec<u8>)> {
+    let (kind, inner) = match adv {
         AdvertisementMessage::Module(mods) => {
             let mut b = Vec::new();
-            b.extend_from_slice(&0u32.to_be_bytes()); // reserved
+            b.extend_from_slice(&0u32.to_be_bytes()); // reserved (no options for Module)
             for m in mods {
                 b.extend_from_slice(&m.manufacturer.to_be_bytes());
                 b.extend_from_slice(&m.module.to_be_bytes());
             }
-            pdu(0x0001, &b)
+            (VECTOR_ADV_MODULE, pdu(VECTOR_LIST, &b))
         }
         AdvertisementMessage::Name { is_response, names } => {
             let mut b = Vec::new();
@@ -141,21 +153,22 @@ fn encode_advertisement_body(adv: &AdvertisementMessage) -> Vec<u8> {
                 b.extend_from_slice(&pn.address.point.to_be_bytes());
                 b.extend_from_slice(&name_field(&pn.name));
             }
-            pdu(0x0002, &b)
+            (VECTOR_ADV_NAME, pdu(VECTOR_LIST, &b))
         }
-        AdvertisementMessage::System(systems) => {
+        AdvertisementMessage::System { is_response, systems } => {
             let mut b = Vec::new();
-            b.push(0); // options
+            b.push(if *is_response { 0x80 } else { 0 }); // options
             b.extend_from_slice(&0u32.to_be_bytes()); // reserved
             b.extend_from_slice(systems);
-            pdu(0x0003, &b)
+            (VECTOR_ADV_SYSTEM, pdu(VECTOR_LIST, &b))
         }
-        AdvertisementMessage::Unknown(_) => Vec::new(),
+        AdvertisementMessage::Unknown(_) => return None,
     };
-    let mut body = Vec::new();
-    body.extend_from_slice(&0u32.to_be_bytes()); // reserved
-    body.extend(sub);
-    body
+
+    let mut body = Vec::with_capacity(4 + inner.len());
+    body.extend_from_slice(&0u32.to_be_bytes()); // OTP Advertisement Layer reserved
+    body.extend(inner);
+    Some((kind, body))
 }
 
 impl Packet {
@@ -166,10 +179,13 @@ impl Packet {
                 VECTOR_TRANSFORM_MESSAGE,
                 pdu(VECTOR_TRANSFORM, &encode_transform_body(t)),
             ),
-            Message::Advertisement(a) => (
-                VECTOR_ADVERTISEMENT_MESSAGE,
-                pdu(VECTOR_ADVERTISEMENT_MESSAGE, &encode_advertisement_body(a)),
-            ),
+            Message::Advertisement(a) => {
+                // The OTP Advertisement Layer's vector (octets 79-80) is the
+                // advertisement KIND; the base-layer vector stays 0x0002.
+                let (kind, body) = encode_advertisement_layer(a)
+                    .unwrap_or((VECTOR_ADVERTISEMENT_MESSAGE, Vec::new()));
+                (VECTOR_ADVERTISEMENT_MESSAGE, pdu(kind, &body))
+            }
         };
 
         // Base-layer fields (63 octets) followed by the message sub-layer.

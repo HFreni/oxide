@@ -27,11 +27,12 @@ if let Message::Transform(t) = packet.message {
 }
 ```
 
-> **Provenance:** the ANSI E1.59 standard is paywalled. This crate's wire format
-> was reconstructed from the public reference implementations — Marcus Birkin's
-> [OTPLib](https://github.com/marcusbirkin/OTPLib) and its Wireshark dissector —
-> and validated with round-trip tests. Field offsets and units are documented
-> per module in the source. Cross-check against E1.59 for formal certainty.
+> **Provenance:** the wire format was reconstructed from the public reference
+> implementations (Marcus Birkin's [OTPLib](https://github.com/marcusbirkin/OTPLib)
+> and its Wireshark dissector) and has since been **audited field-by-field
+> against ANSI E1.59-2021 (R2025)**, including the Appendix B worked examples.
+> The transform/module path is byte-exact per the standard; the advertisement
+> layer's two-level PDU nesting was corrected in 0.2.0.
 
 ## License
 

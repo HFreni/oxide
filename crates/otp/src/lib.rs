@@ -67,10 +67,13 @@ pub const fn transform_multicast(system: u8) -> Ipv4Addr {
 
 const COMPONENT_NAME_LEN: usize = 32;
 
-/// Vector (base layer) selecting a transform message.
+/// Vector (base layer, octets 12-13) selecting a transform message.
 pub const VECTOR_TRANSFORM_MESSAGE: u16 = transform::VECTOR_TRANSFORM;
-/// Vector (base layer) selecting an advertisement message.
-pub const VECTOR_ADVERTISEMENT_MESSAGE: u16 = advertisement::VECTOR_ADVERTISEMENT;
+/// Vector (base layer, octets 12-13) selecting an advertisement message
+/// (`VECTOR_OTP_ADVERTISEMENT_MESSAGE`). The advertisement *kind* is carried
+/// one layer down, by the OTP Advertisement Layer vector (octets 79-80); see
+/// [`advertisement`].
+pub const VECTOR_ADVERTISEMENT_MESSAGE: u16 = 0x0002;
 
 /// Errors produced while decoding an OTP packet.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -173,13 +176,16 @@ impl Packet {
 
         let layer = OtpLayer { cid, folio, page, last_page, component_name };
 
+        // The message sub-layer PDU. For a transform this is the OTP Transform
+        // Layer; for an advertisement this is the OTP Advertisement Layer,
+        // whose vector (octets 79-80) selects the advertisement KIND.
         let sub = pdu::read_one(&body[c.position()..])?
             .ok_or(OtpError::TooShort(buf.len()))?;
 
         let message = match base_vector {
             VECTOR_TRANSFORM_MESSAGE => Message::Transform(TransformMessage::decode(sub.body)?),
             VECTOR_ADVERTISEMENT_MESSAGE => {
-                Message::Advertisement(AdvertisementMessage::decode(sub.body)?)
+                Message::Advertisement(AdvertisementMessage::decode(sub.vector, sub.body)?)
             }
             other => return Err(OtpError::UnknownVector(other)),
         };
