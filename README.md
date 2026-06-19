@@ -1,9 +1,7 @@
 # oxide
 
 Rust decoders for stage tracking and automation network protocols. Each crate
-is receive-only, dependency-light, and `#![forbid(unsafe_code)]`. The `-oxide`
-suffix is the Rust pun: rust is iron oxide, and "oxidizing" means rewriting in
-Rust — so these read as "PSN/OTP/EAP, oxidized."
+is receive-only, dependency-light, and `#![forbid(unsafe_code)]`. 
 
 | | Crate | Protocol |
 |---|-------|----------|
