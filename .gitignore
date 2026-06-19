@@ -6,3 +6,10 @@
 # Local agent / editor state
 .claude/
 .DS_Store
+
+# Copyrighted / paywalled standards documents — keep locally for reference,
+# never commit (this repo is public). Covers the ESTA E1.59 (OTP) standard, etc.
+*.pdf
+ANSI*
+*E1.59*
+ESTA*
