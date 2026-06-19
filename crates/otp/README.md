@@ -10,9 +10,9 @@ rotation, scale, velocity, and acceleration — over UDP multicast. It is layere
 like ACN/sACN and is big-endian. `otp-oxide` decodes transform messages and
 advertisement (discovery) messages, with unit conversion to SI.
 
-- **Receive-only**, zero `unsafe`.
-- Pure decoder; optional `net` feature for a multicast helper that joins
-  per-system transform groups (`239.159.1.<system>`) plus the advertisement group.
+- **Decode and encode** (receive and transmit), zero `unsafe`.
+- Pure codec; optional `net` feature for multicast receiver/sender helpers
+  (per-system transform groups `239.159.1.<system>` plus the advertisement group).
 
 ```rust
 use otp::{Packet, Message};

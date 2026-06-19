@@ -58,3 +58,38 @@ pub fn join_multicast(cfg: &MulticastConfig) -> io::Result<UdpSocket> {
 
     Ok(socket.into())
 }
+
+/// Options for [`sender`].
+#[derive(Debug, Clone)]
+pub struct SenderConfig {
+    /// Outgoing multicast interface (`0.0.0.0` lets the OS choose).
+    pub interface: Ipv4Addr,
+    /// Multicast TTL (hops). OTP is usually local; default `1`.
+    pub ttl: u32,
+    /// Loop multicast back to local sockets (useful for testing).
+    pub loop_back: bool,
+}
+
+impl Default for SenderConfig {
+    fn default() -> Self {
+        Self { interface: Ipv4Addr::UNSPECIFIED, ttl: 1, loop_back: false }
+    }
+}
+
+/// Create a UDP socket for transmitting OTP. Unlike the receiver, this is not
+/// joined or connected to a single group — OTP transform traffic for system `N`
+/// goes to [`transform_multicast(N)`](crate::transform_multicast) and
+/// advertisements to [`ADVERTISEMENT_MULTICAST`]. Use [`send_to`](UdpSocket::send_to)
+/// with the appropriate group, or see [`send_transform`].
+pub fn sender(cfg: &SenderConfig) -> io::Result<UdpSocket> {
+    let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+    socket.set_multicast_if_v4(&cfg.interface)?;
+    socket.set_multicast_ttl_v4(cfg.ttl)?;
+    socket.set_multicast_loop_v4(cfg.loop_back)?;
+    Ok(socket.into())
+}
+
+/// Send an encoded OTP transform datagram to the multicast group for `system`.
+pub fn send_transform(socket: &UdpSocket, system: u8, datagram: &[u8]) -> io::Result<usize> {
+    socket.send_to(datagram, SocketAddr::from((transform_multicast(system), PORT)))
+}

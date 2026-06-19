@@ -11,9 +11,9 @@ standard Ethernet or UDP/IP. This is distinct from the cyclic EtherCAT fieldbus.
 `eap-oxide` decodes published variable telegrams; you match variables by their
 numeric id and interpret the bytes with the helper accessors.
 
-- **Receive-only**, little-endian, zero `unsafe`.
-- Pure decoder; optional `net` feature for a UDP bind helper (port `34980`,
-  broadcast/multicast/unicast).
+- **Decode and encode** (receive and transmit), little-endian, zero `unsafe`.
+- Pure codec; optional `net` feature for UDP receiver/sender helpers (port
+  `34980`, broadcast/multicast/unicast).
 
 ```rust
 let telegram = eap::PublisherTelegram::decode(udp_payload)?;

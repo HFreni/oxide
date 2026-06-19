@@ -58,3 +58,45 @@ pub fn join_multicast(cfg: &MulticastConfig) -> io::Result<UdpSocket> {
 
     Ok(socket.into())
 }
+
+/// Options for [`sender`].
+#[derive(Debug, Clone)]
+pub struct SenderConfig {
+    /// Multicast group to send to. Defaults to [`DEFAULT_MULTICAST_ADDR`].
+    pub group: Ipv4Addr,
+    /// UDP port. Defaults to [`DEFAULT_PORT`].
+    pub port: u16,
+    /// Outgoing multicast interface (`0.0.0.0` lets the OS choose).
+    pub interface: Ipv4Addr,
+    /// Multicast TTL (number of hops). PSN is usually local; default `1`.
+    pub ttl: u32,
+    /// Loop multicast back to local sockets (useful for testing).
+    pub loop_back: bool,
+}
+
+impl Default for SenderConfig {
+    fn default() -> Self {
+        Self {
+            group: DEFAULT_MULTICAST_ADDR,
+            port: DEFAULT_PORT,
+            interface: Ipv4Addr::UNSPECIFIED,
+            ttl: 1,
+            loop_back: false,
+        }
+    }
+}
+
+/// Create a UDP socket set up to transmit PSN to a multicast group.
+///
+/// The socket is `connect`ed to the group, so you can `send` encoded datagrams
+/// (e.g. from [`crate::DataPacket::encode`]) directly. Returned in blocking
+/// mode; wrap with your async runtime as needed.
+pub fn sender(cfg: &SenderConfig) -> io::Result<UdpSocket> {
+    let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+    socket.set_multicast_if_v4(&cfg.interface)?;
+    socket.set_multicast_ttl_v4(cfg.ttl)?;
+    socket.set_multicast_loop_v4(cfg.loop_back)?;
+    let socket: UdpSocket = socket.into();
+    socket.connect((cfg.group, cfg.port))?;
+    Ok(socket)
+}

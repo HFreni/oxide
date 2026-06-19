@@ -38,6 +38,7 @@
 
 pub mod chunk;
 pub mod data;
+mod encode;
 pub mod info;
 mod read;
 

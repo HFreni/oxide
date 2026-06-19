@@ -9,10 +9,11 @@ position of tracked objects on stage over UDP multicast. `psn-oxide` decodes
 both `PSN_DATA` (live transforms) and `PSN_INFO` (system and tracker names)
 packets, and provides a multicast-socket helper.
 
-- **Receive-only**, zero `unsafe`.
-- Pure decoder with no async runtime imposed — use it with blocking sockets,
+- **Decode and encode** (receive and transmit), zero `unsafe`.
+- Pure codec with no async runtime imposed — use it with blocking sockets,
   tokio, or anything else.
-- Optional `net` feature (on by default) for a ready-to-use multicast socket.
+- Optional `net` feature (on by default) for ready-to-use multicast receiver
+  and sender sockets.
 
 ```rust
 use psn::{Packet};

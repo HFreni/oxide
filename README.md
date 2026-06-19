@@ -1,7 +1,8 @@
 # oxide
 
-Rust decoders for stage tracking and automation network protocols. Each crate
-is receive-only, dependency-light, and `#![forbid(unsafe_code)]`. 
+Rust codecs for stage tracking and automation network protocols. Each crate
+**decodes and encodes** its protocol (receive and transmit), is dependency-light,
+and `#![forbid(unsafe_code)]`.
 
 | | Crate | Protocol |
 |---|-------|----------|
@@ -16,8 +17,9 @@ otp-oxide = "0.1"   # use otp;
 eap-oxide = "0.1"   # use eap;
 ```
 
-Each crate exposes a pure decoder plus an optional `net` feature (on by default)
-with a multicast/UDP socket helper. Wire formats for OTP and EAP were
+Each crate exposes a pure codec (decode + encode) plus an optional `net` feature
+(on by default) with multicast/UDP receiver **and** sender helpers — so you can
+both consume a tracking feed and simulate one. Wire formats for OTP and EAP were
 reconstructed from public reference implementations and validated with
 round-trip tests — see each crate's README for provenance and caveats.
 

@@ -33,6 +33,7 @@
 #![warn(missing_docs)]
 
 pub mod advertisement;
+mod encode;
 pub mod modules;
 pub mod pdu;
 mod read;

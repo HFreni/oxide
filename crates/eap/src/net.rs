@@ -58,3 +58,15 @@ pub fn bind(cfg: &BindConfig) -> io::Result<UdpSocket> {
 
     Ok(socket.into())
 }
+
+/// Create a UDP socket for transmitting EAP datagrams to `target` (which may be
+/// a unicast, broadcast, or multicast address). The socket is `connect`ed to
+/// `target`, so you can `send` encoded telegrams directly. Broadcast is enabled
+/// so a broadcast target works out of the box.
+pub fn sender(target: SocketAddr) -> io::Result<UdpSocket> {
+    let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+    socket.set_broadcast(true)?;
+    let socket: UdpSocket = socket.into();
+    socket.connect(target)?;
+    Ok(socket)
+}

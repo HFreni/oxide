@@ -40,6 +40,9 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+mod encode;
+pub mod value;
+
 #[cfg(feature = "net")]
 pub mod net;
 
@@ -52,6 +55,10 @@ pub const UDP_PORT: u16 = 34980;
 const FRAME_HEADER_LEN: usize = 2;
 const NV_HEADER_LEN: usize = 12;
 const VAR_HEADER_LEN: usize = 8;
+
+/// The EtherCAT frame-header `Type` field set to Network Variables (4), shifted
+/// into bits 12..=15 — i.e. `0x4000`. Used by the encoder.
+pub(crate) const FRAME_TYPE_NV_BITS: u16 = 4 << 12;
 
 /// EtherCAT frame `Type` field values (bits 12..=15 of the frame header).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
